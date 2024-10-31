@@ -1,0 +1,75 @@
+name: dockercompose16513905731071727073
+services:
+  mysql:
+    environment:
+      MYSQL_DATABASE: mydb
+      MYSQL_ROOT_PASSWORD: programa1crud
+    image: mysql:8.0
+    networks:
+      app-network: null
+    ports:
+      - mode: ingress
+        target: 3306
+        published: "3307"
+        protocol: tcp
+    volumes:
+      - type: volume
+        source: mysql-data
+        target: /var/lib/mysql
+        volume: {}
+      - type: bind
+        source: C:\Users\Pc\source\repos\EcondeCRUD\init.sql
+        target: /docker-entrypoint-initdb.d/init.sql
+        bind:
+          create_host_path: true
+  webapi:
+    build:
+      context: C:\Users\Pc\source\repos\EcondeCRUD
+      dockerfile: WebApi/Dockerfile
+    depends_on:
+      mysql:
+        condition: service_started
+        required: true
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ASPNETCORE_HTTPS_PORTS: "8081"
+      db_connection_string: server=mysql,3307;database=mydb;user=root;password=programa1crud;
+    image: webapi
+    networks:
+      app-network: null
+    ports:
+      - mode: ingress
+        target: 8080
+        published: "5000"
+        protocol: tcp
+      - mode: ingress
+        target: 8081
+        published: "5001"
+        protocol: tcp
+      - mode: ingress
+        target: 8080
+        protocol: tcp
+      - mode: ingress
+        target: 8081
+        protocol: tcp
+    volumes:
+      - type: bind
+        source: C:\Users\Pc\AppData\Roaming/Microsoft/UserSecrets
+        target: /home/app/.microsoft/usersecrets
+        read_only: true
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\Users\Pc\AppData\Roaming/ASP.NET/Https
+        target: /home/app/.aspnet/https
+        read_only: true
+        bind:
+          create_host_path: true
+networks:
+  app-network:
+    name: dockercompose16513905731071727073_app-network
+    driver: bridge
+volumes:
+  mysql-data:
+    name: dockercompose16513905731071727073_mysql-data
